@@ -1,0 +1,7 @@
+school_name,course_code,course_title,credits,price_per_credit,price_per_course,canonical_course_url,registration_url,final_status
+Arizona State University,HST 100,Early Global History,3,,425.00,https://courses.ulc.asu.edu/global-history-to-1500-hst-100/,https://ulc.asu.edu/how-to-enroll/,confirmed_or_likely_available
+Arizona State University,HST 109,American History,3,,425.00,https://courses.ulc.asu.edu/united-states-to-1865-hst-109/,https://ulc.asu.edu/how-to-enroll/,confirmed_or_likely_available
+Brigham Young University,CHEM 101,Introductory Chemistry,3,,768.00,https://is.byu.edu/catalog/CHEM-101-300-002,https://is.byu.edu/catalog/CHEM-101-300-002,confirmed_or_likely_available
+Brigham Young University,CHEM 481,Biochemistry,3,,768.00,https://is.byu.edu/catalog/CHEM-481-300-001,https://is.byu.edu/catalog/CHEM-481-300-001,confirmed_or_likely_available
+Columbus State Community College,ACCT 1211,Financial Accounting,3,192.93,578.79,https://explore.cscc.edu/courses/ACCT1211,https://selfservice.cscc.edu/Student/Student/Courses/Search?keyword=ACCT-1211,confirmed_or_likely_available
+Columbus State Community College,CHEM 1100,Chemistry and Society,5,192.93,964.65,https://explore.cscc.edu/courses/CHEM1100,https://selfservice.cscc.edu/Student/Student/Courses/Search?keyword=CHEM-1100,confirmed_or_likely_available
