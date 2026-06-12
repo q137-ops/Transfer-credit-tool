@@ -10,20 +10,49 @@ The project currently includes:
 - Supabase SQL for schema, search RPCs, RLS, and example seed data.
 - Official-catalog import scripts for sources such as ASU ULC, BYU Independent Study, and Columbus State Community College.
 
-## Fastest Deployment
+## Quick Deploy
 
-Most users do not need to create a Supabase project, run SQL, import data, or run the Python crawler. They can deploy the read-only search site against the hosted Supabase dataset maintained for this project.
+Most users do not need to create a Supabase project, run SQL, import data, or run the Python crawler. This deploys the read-only search site against the hosted Supabase dataset maintained for this project.
 
-Required public values:
+Prerequisites:
+
+- Git
+- Node.js 18 or newer
+- A Vercel account
+
+Paste this whole block into PowerShell:
+
+```powershell
+$repo = "https://github.com/q137-ops/Transfer-credit-tool.git"
+$supabaseUrl = "https://pqgakcbzazunbdtfpkox.supabase.co"
+$supabaseAnonKey = "sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ"
+
+git clone $repo
+Set-Location Transfer-credit-tool
+
+npx vercel@latest --cwd web --prod --yes `
+  --build-env NEXT_PUBLIC_SUPABASE_URL=$supabaseUrl `
+  --build-env NEXT_PUBLIC_SUPABASE_ANON_KEY=$supabaseAnonKey `
+  --env NEXT_PUBLIC_SUPABASE_URL=$supabaseUrl `
+  --env NEXT_PUBLIC_SUPABASE_ANON_KEY=$supabaseAnonKey
+```
+
+If the repository is already cloned, run this from the repository root:
+
+```powershell
+.\scripts\deploy-vercel-hosted.ps1
+```
+
+The deployed site uses these public read-only frontend values:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
-Copy/paste deployment commands are in [DEPLOY.md](DEPLOY.md).
+These two `NEXT_PUBLIC_` values are browser-visible by design and must be read-only at the database policy level. Do not put `DATABASE_URL`, Supabase `service_role` keys, Tavily/Google search keys, or production data dumps in frontend deployment settings.
 
-These two `NEXT_PUBLIC_` values are browser-visible by design and must be read-only at the database policy level. Do not give deployment users `DATABASE_URL`, Supabase `service_role` keys, Tavily/Google search keys, or production data dumps.
+For local preview, Vercel Dashboard deployment, and maintainer setup, see [DEPLOY.md](DEPLOY.md).
 
 ## Repository Layout
 
@@ -53,109 +82,6 @@ docs/                 Operational notes
 - Database: Supabase Postgres, RLS, `pg_trgm`, `unaccent`
 - Search providers: Tavily or Google Programmable Search support in code; Brave Search is a recommended future provider for larger batches.
 
-## Local Setup for Maintainers
-
-This section is for maintainers who need to run the crawler, imports, or backend scripts. If you only want to deploy the public search UI, use [DEPLOY.md](DEPLOY.md) instead.
-
-### 1. Environment Files
-
-Copy the example env files and fill in your own values:
-
-```powershell
-Copy-Item .env.example .env
-Copy-Item web\.env.local.example web\.env.local
-```
-
-Root `.env`:
-
-```env
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
-SEARCH_PROVIDER=tavily
-TAVILY_API_KEY=tvly-your-key-here
-GOOGLE_SEARCH_API_KEY=
-GOOGLE_SEARCH_CX=
-```
-
-Web `.env.local`:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-or-anon-key
-```
-
-Never commit real `.env` files.
-
-## Deploy With the Hosted Read-Only Supabase Backend
-
-For the simplest deployment path, use [DEPLOY.md](DEPLOY.md). It gives a PowerShell block that clones this repository, sets the two public Supabase variables, and deploys the `web` app to Vercel.
-
-This mode supports the public search UI only. It does not let deployed users run crawlers, import spreadsheets, modify data, or access private backend credentials.
-
-### Vercel Deployment
-
-1. Fork or clone this repository.
-2. In Vercel, create a new project from the GitHub repository.
-3. Set **Root Directory** to `web`.
-4. Keep the default commands:
-   - Install Command: `npm install`
-   - Build Command: `npm run build`
-   - Output Directory: leave unset for standard Next.js hosting
-5. Add these environment variables using the hosted read-only values supplied by the project maintainer:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
-```
-
-6. Deploy.
-
-The `NEXT_PUBLIC_` variables are intentionally browser-visible. Security comes from Supabase RLS and read-only grants, not from hiding these values.
-
-### What the Hosted Backend Exposes
-
-The hosted backend is limited to read-only access for:
-
-- `public.transfer_course_search`
-- `public.online_course_discovery_search`
-- `public.search_online_course_discovery(q, max_results)`
-- supporting read tables needed by the search RPC: `schools`, `online_courses`, and `online_program_pages`
-
-It does not expose write access to crawl tasks, raw imports, AI judgments, logs, or private credentials.
-
-Maintainers can still change the hosted data through trusted backend credentials. The read-only deployment setup only limits what browser users can do with the public Supabase key.
-
-### If No Hosted Supabase Values Are Provided
-
-The frontend needs Supabase environment variables to show real search results. Without them, the project can still build, but the search UI cannot query the hosted dataset. To run with an independent database, create a Supabase project and apply the SQL in `supabase/schema.safe.sql`, then optionally load `supabase/seed.example.sql`.
-
-### 2. Install Frontend Dependencies
-
-```powershell
-cd web
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-### 3. Install Backend Dependencies
-
-```powershell
-.\.venv\Scripts\pip.exe install -r backend\requirements.txt
-```
-
-Run the API:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8010
-```
-
-Health check:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:8010/health
-```
-
 ## Supabase
 
 GitHub-safe SQL lives in [supabase/](supabase/):
@@ -176,30 +102,6 @@ This repository intentionally excludes raw production data, including:
 - Local source spreadsheets such as `data/courses.xlsx`.
 
 Small example files in `data/examples/` are included only to demonstrate expected shapes. Verify third-party data licensing before redistributing any real dataset.
-
-## Useful Commands
-
-Import official online catalogs:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\import_official_online_catalogs.py --school asu
-.\.venv\Scripts\python.exe scripts\import_official_online_catalogs.py --school byu
-.\.venv\Scripts\python.exe scripts\import_official_online_catalogs.py --school cscc
-```
-
-Run discovery for one school:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\run_online_discovery_batch.py --school "Columbus State Community College" --max-pages 40 --max-depth 2
-```
-
-Run frontend checks:
-
-```powershell
-cd web
-npm run lint
-npm run build
-```
 
 ## Security Notes
 
