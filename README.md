@@ -10,6 +10,21 @@ The project currently includes:
 - Supabase SQL for schema, search RPCs, RLS, and example seed data.
 - Official-catalog import scripts for sources such as ASU ULC, BYU Independent Study, and Columbus State Community College.
 
+## Fastest Deployment
+
+Most users do not need to create a Supabase project, run SQL, import data, or run the Python crawler. They can deploy the read-only search site against the hosted Supabase dataset maintained for this project.
+
+Required public values:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+```
+
+Copy/paste deployment commands are in [DEPLOY.md](DEPLOY.md).
+
+These two `NEXT_PUBLIC_` values are browser-visible by design and must be read-only at the database policy level. Do not give deployment users `DATABASE_URL`, Supabase `service_role` keys, Tavily/Google search keys, or production data dumps.
+
 ## Repository Layout
 
 ```text
@@ -38,7 +53,9 @@ docs/                 Operational notes
 - Database: Supabase Postgres, RLS, `pg_trgm`, `unaccent`
 - Search providers: Tavily or Google Programmable Search support in code; Brave Search is a recommended future provider for larger batches.
 
-## Local Setup
+## Local Setup for Maintainers
+
+This section is for maintainers who need to run the crawler, imports, or backend scripts. If you only want to deploy the public search UI, use [DEPLOY.md](DEPLOY.md) instead.
 
 ### 1. Environment Files
 
@@ -70,7 +87,7 @@ Never commit real `.env` files.
 
 ## Deploy With the Hosted Read-Only Supabase Backend
 
-The fastest way to deploy this project is to use the hosted read-only Supabase backend maintained for this app. This lets a deployed copy of the frontend search the existing course dataset without importing a database dump.
+For the simplest deployment path, use [DEPLOY.md](DEPLOY.md). It gives a PowerShell block that clones this repository, sets the two public Supabase variables, and deploys the `web` app to Vercel.
 
 This mode supports the public search UI only. It does not let deployed users run crawlers, import spreadsheets, modify data, or access private backend credentials.
 

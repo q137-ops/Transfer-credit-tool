@@ -2,6 +2,8 @@
 
 This directory contains GitHub-safe Supabase SQL and tiny example data for local development.
 
+Users who are deploying against the hosted read-only backend do not need to run any SQL from this directory. These files are for maintainers, security review, and independent self-hosted database setups.
+
 ## Safe to Commit
 
 - Schema DDL: `create table`, `alter table`, `create index`, constraints, triggers.

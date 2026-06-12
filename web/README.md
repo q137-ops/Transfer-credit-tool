@@ -4,6 +4,17 @@ This is the Next.js frontend for Transfer Master.
 
 For full project setup, Supabase schema notes, data policy, and licensing, see the root [README.md](../README.md).
 
+## Quick Deploy
+
+Most users can deploy this frontend without creating Supabase tables or running SQL. Use the copy/paste commands in [../DEPLOY.md](../DEPLOY.md) and ask the maintainer only for:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+```
+
+Do not put `DATABASE_URL`, Supabase `service_role`, Tavily, Google, or crawler keys in this frontend.
+
 ## Development
 
 ```powershell
@@ -26,7 +37,7 @@ Only public Supabase keys belong in this file. Never put `service_role` keys in 
 
 ## Deploying the Web App
 
-When deploying from GitHub on Vercel, set the project root directory to `web`.
+When deploying from GitHub on Vercel, set the project root directory to `web`. The one-command path in [../DEPLOY.md](../DEPLOY.md) passes the same values through the Vercel CLI.
 
 Use the hosted read-only Supabase values supplied by the project maintainer:
 
