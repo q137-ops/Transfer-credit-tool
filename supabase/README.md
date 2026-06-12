@@ -24,9 +24,36 @@ This directory contains GitHub-safe Supabase SQL and tiny example data for local
   - `public.transfer_course_search`
   - `public.online_course_discovery_search`
   - `public.search_online_course_discovery(q, max_results)`
-- The online discovery tables should be public read-only for `anon`/`authenticated`.
+- The public browser roles should be read-only and limited to the tables/view/RPC required by search.
 - Keep writes in trusted backend scripts using `DATABASE_URL`, not the browser.
-- Existing MVP tables `courses` and `crawl_logs` have anon write policies in the live database. Do not copy those policies into public migrations unless you intentionally want anonymous writes.
+- Do not expose `DATABASE_URL`, `service_role`, crawl logs, raw import tables, or search provider keys to deployed users.
+
+## Hosted Read-Only Backend
+
+Deployments can point at an existing hosted Supabase backend by setting only:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+These values are public by design. Before sharing them with deployment users, apply or verify `security_hardening.sql` so `anon` and `authenticated` have no write privileges and only the search-facing objects are readable.
+
+The hardening is reversible. It only changes grants and RLS policies for browser-facing roles (`anon` and `authenticated`). Maintainers can still update data through trusted server-side credentials such as `DATABASE_URL`.
+
+If a future feature intentionally needs frontend writes, add a narrow policy for that specific table and action instead of restoring broad anonymous writes. For example:
+
+```sql
+grant insert on public.some_public_table to authenticated;
+
+create policy authenticated_can_insert_some_public_table
+  on public.some_public_table
+  for insert
+  to authenticated
+  with check (true);
+```
+
+Do not grant broad write access to `anon` unless the table is explicitly designed for public anonymous submissions.
 
 ## Recommended GitHub Layout
 

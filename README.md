@@ -68,6 +68,49 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-or-anon-key
 
 Never commit real `.env` files.
 
+## Deploy With the Hosted Read-Only Supabase Backend
+
+The fastest way to deploy this project is to use the hosted read-only Supabase backend maintained for this app. This lets a deployed copy of the frontend search the existing course dataset without importing a database dump.
+
+This mode supports the public search UI only. It does not let deployed users run crawlers, import spreadsheets, modify data, or access private backend credentials.
+
+### Vercel Deployment
+
+1. Fork or clone this repository.
+2. In Vercel, create a new project from the GitHub repository.
+3. Set **Root Directory** to `web`.
+4. Keep the default commands:
+   - Install Command: `npm install`
+   - Build Command: `npm run build`
+   - Output Directory: leave unset for standard Next.js hosting
+5. Add these environment variables using the hosted read-only values supplied by the project maintainer:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+```
+
+6. Deploy.
+
+The `NEXT_PUBLIC_` variables are intentionally browser-visible. Security comes from Supabase RLS and read-only grants, not from hiding these values.
+
+### What the Hosted Backend Exposes
+
+The hosted backend is limited to read-only access for:
+
+- `public.transfer_course_search`
+- `public.online_course_discovery_search`
+- `public.search_online_course_discovery(q, max_results)`
+- supporting read tables needed by the search RPC: `schools`, `online_courses`, and `online_program_pages`
+
+It does not expose write access to crawl tasks, raw imports, AI judgments, logs, or private credentials.
+
+Maintainers can still change the hosted data through trusted backend credentials. The read-only deployment setup only limits what browser users can do with the public Supabase key.
+
+### If No Hosted Supabase Values Are Provided
+
+The frontend needs Supabase environment variables to show real search results. Without them, the project can still build, but the search UI cannot query the hosted dataset. To run with an independent database, create a Supabase project and apply the SQL in `supabase/schema.safe.sql`, then optionally load `supabase/seed.example.sql`.
+
 ### 2. Install Frontend Dependencies
 
 ```powershell
