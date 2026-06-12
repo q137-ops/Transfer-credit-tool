@@ -17,8 +17,8 @@ Most users do not need to create a Supabase project, run SQL, import data, or ru
 Required public values:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
 Copy/paste deployment commands are in [DEPLOY.md](DEPLOY.md).
@@ -103,8 +103,8 @@ This mode supports the public search UI only. It does not let deployed users run
 5. Add these environment variables using the hosted read-only values supplied by the project maintainer:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
 6. Deploy.

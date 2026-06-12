@@ -1,9 +1,7 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$SupabaseUrl,
+    [string]$SupabaseUrl = "https://pqgakcbzazunbdtfpkox.supabase.co",
 
-    [Parameter(Mandatory = $true)]
-    [string]$SupabaseAnonKey
+    [string]$SupabaseAnonKey = "sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ"
 )
 
 npx vercel@latest --cwd web --prod --yes `

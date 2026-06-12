@@ -6,11 +6,11 @@ For full project setup, Supabase schema notes, data policy, and licensing, see t
 
 ## Quick Deploy
 
-Most users can deploy this frontend without creating Supabase tables or running SQL. Use the copy/paste commands in [../DEPLOY.md](../DEPLOY.md) and ask the maintainer only for:
+Most users can deploy this frontend without creating Supabase tables or running SQL. Use the copy/paste commands in [../DEPLOY.md](../DEPLOY.md) with these public read-only values:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
 Do not put `DATABASE_URL`, Supabase `service_role`, Tavily, Google, or crawler keys in this frontend.
@@ -29,8 +29,8 @@ Open [http://localhost:3000](http://localhost:3000).
 Create `web/.env.local` from `web/.env.local.example`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-publishable-or-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
 Only public Supabase keys belong in this file. Never put `service_role` keys in frontend code.
@@ -42,8 +42,8 @@ When deploying from GitHub on Vercel, set the project root directory to `web`. T
 Use the hosted read-only Supabase values supplied by the project maintainer:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
 These browser-visible values only provide read access to the public search dataset. Crawling, importing, and database writes require private server-side credentials and are not available from the deployed frontend.

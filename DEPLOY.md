@@ -6,11 +6,11 @@ The deployed site is a read-only search UI. It can query the hosted course datas
 
 ## Required Public Values
 
-Ask the project maintainer for these two public frontend values:
+This hosted deployment uses these public frontend values:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-hosted-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-hosted-read-only-anon-or-publishable-key
+NEXT_PUBLIC_SUPABASE_URL=https://pqgakcbzazunbdtfpkox.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ
 ```
 
 Do not request or use:
@@ -32,12 +32,12 @@ The first Vercel command may ask you to log in.
 
 ## Deploy to Vercel from PowerShell
 
-Replace the two placeholder values, then paste the whole block into PowerShell:
+Paste the whole block into PowerShell:
 
 ```powershell
 $repo = "https://github.com/q137-ops/Transfer-credit-tool.git"
-$supabaseUrl = "PASTE_HOSTED_SUPABASE_URL"
-$supabaseAnonKey = "PASTE_HOSTED_READ_ONLY_ANON_OR_PUBLISHABLE_KEY"
+$supabaseUrl = "https://pqgakcbzazunbdtfpkox.supabase.co"
+$supabaseAnonKey = "sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ"
 
 git clone $repo
 Set-Location Transfer-credit-tool
@@ -54,19 +54,17 @@ The command uses Vercel's documented `--cwd`, `--yes`, `--prod`, `--build-env`, 
 If the repository is already cloned, run this from the repository root instead:
 
 ```powershell
-.\scripts\deploy-vercel-hosted.ps1 `
-  -SupabaseUrl "PASTE_HOSTED_SUPABASE_URL" `
-  -SupabaseAnonKey "PASTE_HOSTED_READ_ONLY_ANON_OR_PUBLISHABLE_KEY"
+.\scripts\deploy-vercel-hosted.ps1
 ```
 
 ## Run Locally from PowerShell
 
-Replace the two placeholder values, then paste the whole block into PowerShell:
+Paste the whole block into PowerShell:
 
 ```powershell
 $repo = "https://github.com/q137-ops/Transfer-credit-tool.git"
-$supabaseUrl = "PASTE_HOSTED_SUPABASE_URL"
-$supabaseAnonKey = "PASTE_HOSTED_READ_ONLY_ANON_OR_PUBLISHABLE_KEY"
+$supabaseUrl = "https://pqgakcbzazunbdtfpkox.supabase.co"
+$supabaseAnonKey = "sb_publishable_ogfsGZKcfi-_JOD3kdXndQ_ujWAEdxQ"
 
 git clone $repo
 Set-Location Transfer-credit-tool
