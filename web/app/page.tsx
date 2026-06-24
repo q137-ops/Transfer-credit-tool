@@ -135,6 +135,7 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [transferLimitHit, setTransferLimitHit] = useState(false);
   const [onlineLimitHit, setOnlineLimitHit] = useState(false);
+  const [showOnlineMatchesOnly, setShowOnlineMatchesOnly] = useState(false);
 
   const onlineBySchoolAndCode = new Map<string, OnlineCourse>();
   for (const course of onlineCourses) {
@@ -167,6 +168,12 @@ export default function Home() {
         : "verified_by_osu_equivalency",
     };
   });
+
+  const visibleCourses = showOnlineMatchesOnly
+    ? mergedCourses.filter(
+        (course) => course.status === "verified_by_osu_equivalency_and_online"
+      )
+    : mergedCourses;
 
   function buildTransferRequest(from: number, to: number) {
     let request = supabase
@@ -387,13 +394,13 @@ export default function Home() {
         </div>
 
         <section>
-          <div className="mb-3 flex items-end justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-950">
                 Courses
               </h2>
               <p className="text-sm text-slate-500">
-                Showing {mergedCourses.length} OSU-verified results
+                Showing {visibleCourses.length} of {mergedCourses.length} OSU-verified results
               </p>
               {(transferLimitHit || onlineLimitHit) && (
                 <p className="mt-1 text-sm font-medium text-amber-700">
@@ -402,10 +409,21 @@ export default function Home() {
                 </p>
               )}
             </div>
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+              <input
+                type="checkbox"
+                checked={showOnlineMatchesOnly}
+                onChange={(event) =>
+                  setShowOnlineMatchesOnly(event.target.checked)
+                }
+                className="h-4 w-4 accent-slate-950"
+              />
+              Online matches only
+            </label>
           </div>
 
           <div className="grid gap-3">
-            {mergedCourses.map(({ transfer, online, status }) => (
+            {visibleCourses.map(({ transfer, online, status }) => (
               <article
                 key={transfer.id}
                 className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
@@ -499,9 +517,11 @@ export default function Home() {
               </article>
             ))}
 
-            {!loading && mergedCourses.length === 0 && (
+            {!loading && visibleCourses.length === 0 && (
               <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
-                No OSU-verified course results.
+                {showOnlineMatchesOnly
+                  ? "No OSU-verified online matches."
+                  : "No OSU-verified course results."}
               </div>
             )}
           </div>
