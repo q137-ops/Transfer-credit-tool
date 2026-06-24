@@ -42,6 +42,12 @@ type MergedCourse = {
   status: "verified_by_osu_equivalency" | "verified_by_osu_equivalency_and_online";
 };
 
+const TRANSFER_PAGE_SIZE = 1000;
+const ONLINE_PAGE_SIZE = 1000;
+const MAX_TRANSFER_RESULTS = 10000;
+const MAX_ONLINE_RESULTS_PER_SCHOOL_BATCH = 10000;
+const SCHOOL_BATCH_SIZE = 25;
+
 function money(value: number | string | null) {
   if (value === null || value === "") {
     return "Unknown";
@@ -91,6 +97,22 @@ function extractNormalizedCourseCodes(value: string | null) {
   );
 }
 
+function normalizeSchoolName(value: string | null) {
+  return (value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+function courseMatchKey(schoolName: string | null, courseCode: string) {
+  return `${normalizeSchoolName(schoolName)}::${courseCode}`;
+}
+
+function isUsableOnlineCourse(course: OnlineCourse) {
+  return (
+    course.is_online !== false &&
+    course.is_academic_credit !== false &&
+    course.is_non_degree_accessible !== false
+  );
+}
+
 function searchTerms(value: string) {
   return value
     .replace(/[-_]+/g, " ")
@@ -111,12 +133,19 @@ export default function Home() {
   const [school, setSchool] = useState("");
   const [target, setTarget] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [transferLimitHit, setTransferLimitHit] = useState(false);
+  const [onlineLimitHit, setOnlineLimitHit] = useState(false);
 
-  const onlineByCode = new Map<string, OnlineCourse>();
+  const onlineBySchoolAndCode = new Map<string, OnlineCourse>();
   for (const course of onlineCourses) {
+    if (!isUsableOnlineCourse(course)) {
+      continue;
+    }
+
     for (const code of extractNormalizedCourseCodes(course.course_code)) {
-      if (!onlineByCode.has(code)) {
-        onlineByCode.set(code, course);
+      const key = courseMatchKey(course.school_name, code);
+      if (!onlineBySchoolAndCode.has(key)) {
+        onlineBySchoolAndCode.set(key, course);
       }
     }
   }
@@ -124,7 +153,10 @@ export default function Home() {
   const mergedCourses: MergedCourse[] = transferCourses.map((transfer) => {
     const online =
       extractNormalizedCourseCodes(transfer.source_course_code)
-        .map((code) => onlineByCode.get(code) ?? null)
+        .map((code) =>
+          onlineBySchoolAndCode.get(courseMatchKey(transfer.school_name, code)) ??
+          null
+        )
         .find(Boolean) ?? null;
 
     return {
@@ -136,13 +168,17 @@ export default function Home() {
     };
   });
 
-  async function fetchTransferCourses() {
+  function buildTransferRequest(from: number, to: number) {
     let request = supabase
       .from("transfer_course_search")
       .select(
         "id, school_name, source_course_code, source_course_title, target_course_code, target_course_title, effective_date, is_online, estimated_price, confidence_level"
       )
-      .limit(100);
+      .order("school_name", { ascending: true, nullsFirst: false })
+      .order("source_course_code", { ascending: true, nullsFirst: false })
+      .order("target_course_code", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true })
+      .range(from, to);
 
     for (const term of searchTerms(query)) {
       const q = safeIlikeTerm(term);
@@ -163,31 +199,100 @@ export default function Home() {
       request = request.ilike("target_course_code", `%${target.trim()}%`);
     }
 
-    const { data, error } = await request;
-    if (error) {
-      throw error;
-    }
-
-    setTransferCourses(data ?? []);
+    return request;
   }
 
-  async function fetchOnlineCourses() {
-    const terms = [school, query].map((value) => value.trim()).filter(Boolean);
-    const q = terms.length ? terms.join(" ") : "online credit course";
+  async function fetchTransferCourses() {
+    const rows: TransferCourse[] = [];
+    let hitLimit = false;
 
-    const { data, error } = await supabase.rpc(
-      "search_online_course_discovery",
-      {
-        q,
-        max_results: 100,
+    for (
+      let from = 0;
+      from < MAX_TRANSFER_RESULTS;
+      from += TRANSFER_PAGE_SIZE
+    ) {
+      const to = Math.min(from + TRANSFER_PAGE_SIZE - 1, MAX_TRANSFER_RESULTS - 1);
+      const { data, error } = await buildTransferRequest(from, to);
+
+      if (error) {
+        throw error;
       }
-    );
 
-    if (error) {
-      throw error;
+      const page = data ?? [];
+      rows.push(...page);
+
+      if (page.length < TRANSFER_PAGE_SIZE) {
+        break;
+      }
+
+      if (rows.length >= MAX_TRANSFER_RESULTS) {
+        hitLimit = true;
+      }
     }
 
-    setOnlineCourses((data ?? []) as OnlineCourse[]);
+    setTransferLimitHit(hitLimit);
+    setTransferCourses(rows);
+    return rows;
+  }
+
+  async function fetchOnlineCoursesForTransferRows(rows: TransferCourse[]) {
+    const schoolNames = Array.from(
+      new Set(rows.map((row) => row.school_name).filter(Boolean) as string[])
+    );
+
+    if (schoolNames.length === 0) {
+      setOnlineLimitHit(false);
+      setOnlineCourses([]);
+      return;
+    }
+
+    const onlineRows: OnlineCourse[] = [];
+    let hitLimit = false;
+
+    for (let i = 0; i < schoolNames.length; i += SCHOOL_BATCH_SIZE) {
+      const schoolBatch = schoolNames.slice(i, i + SCHOOL_BATCH_SIZE);
+
+      for (
+        let from = 0;
+        from < MAX_ONLINE_RESULTS_PER_SCHOOL_BATCH;
+        from += ONLINE_PAGE_SIZE
+      ) {
+        const to = Math.min(
+          from + ONLINE_PAGE_SIZE - 1,
+          MAX_ONLINE_RESULTS_PER_SCHOOL_BATCH - 1
+        );
+
+        const { data, error } = await supabase
+          .from("online_course_discovery_search")
+          .select(
+            "id, school_name, course_code, course_title, credits, canonical_course_url, delivery_mode, is_online, is_academic_credit, is_non_degree_accessible, price_per_credit, price_per_course, registration_url, final_status, confidence, program_url"
+          )
+          .in("school_name", schoolBatch)
+          .order("school_name", { ascending: true, nullsFirst: false })
+          .order("course_code", { ascending: true, nullsFirst: false })
+          .order("course_title", { ascending: true, nullsFirst: false })
+          .order("id", { ascending: true })
+          .range(from, to);
+
+        if (error) {
+          throw error;
+        }
+
+        const page = (data ?? []) as OnlineCourse[];
+        onlineRows.push(...page);
+
+        if (page.length < ONLINE_PAGE_SIZE) {
+          break;
+        }
+
+        if (from + ONLINE_PAGE_SIZE >= MAX_ONLINE_RESULTS_PER_SCHOOL_BATCH) {
+          hitLimit = true;
+        }
+      }
+    }
+
+    setOnlineLimitHit(hitLimit);
+    setOnlineCourses(onlineRows);
   }
 
   async function fetchCourses() {
@@ -195,7 +300,8 @@ export default function Home() {
     setErrorMessage(null);
 
     try {
-      await Promise.all([fetchTransferCourses(), fetchOnlineCourses()]);
+      const rows = await fetchTransferCourses();
+      await fetchOnlineCoursesForTransferRows(rows);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Search failed unexpectedly.";
@@ -289,6 +395,12 @@ export default function Home() {
               <p className="text-sm text-slate-500">
                 Showing {mergedCourses.length} OSU-verified results
               </p>
+              {(transferLimitHit || onlineLimitHit) && (
+                <p className="mt-1 text-sm font-medium text-amber-700">
+                  Showing the first available results. Narrow the search if a
+                  broad query still reaches the safety limit.
+                </p>
+              )}
             </div>
           </div>
 
