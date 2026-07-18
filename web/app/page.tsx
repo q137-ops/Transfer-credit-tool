@@ -80,6 +80,50 @@ function numberText(value: number | string | null) {
   });
 }
 
+// OSU transfer-articulation "effective term" codes are 5 digits: YYYY + term.
+// Modern OSU SIS uses 4 digits (1238 = Au 2023, mapping 2=Sp, 4=Su, 8=Au), but
+// the transfer-articulation feed in this dataset only uses the legacy 5-digit form.
+// Term-digit mapping inferred from data distribution across ~30 years of records:
+//   4 -> Autumn  (dominant across all years, standard effective term)
+//   2 -> Spring  (only appears 2015+, matches post-2012 semester conversion)
+//   3 -> Summer  (only appears 2017+, matches semester-era summer term)
+//   1 -> unlabeled (only 4 rows, all year 2014; likely data artifact)
+// Unmapped digits fall back to "Term N" so we never mislabel.
+const TERM_LABELS: Record<string, string> = {
+  "2": "Spring",
+  "3": "Summer",
+  "4": "Autumn",
+};
+
+function formatEffectiveDate(value: string | null) {
+  if (!value) {
+    return "Unknown";
+  }
+
+  const trimmed = value.trim();
+  const match = trimmed.match(
+    /^(\d{4})(\d)(?:\s+To\s+(Present|(\d{4})(\d)))?\s*$/i
+  );
+
+  if (!match) {
+    return trimmed;
+  }
+
+  const [, startYear, startTerm, tail, endYear, endTerm] = match;
+  const start = `${TERM_LABELS[startTerm] ?? `Term ${startTerm}`} ${startYear}`;
+
+  if (!tail) {
+    return start;
+  }
+
+  if (/^present$/i.test(tail)) {
+    return `${start} – Present`;
+  }
+
+  const end = `${TERM_LABELS[endTerm!] ?? `Term ${endTerm}`} ${endYear}`;
+  return `${start} – ${end}`;
+}
+
 function extractNormalizedCourseCodes(value: string | null) {
   if (!value) {
     return [];
@@ -475,7 +519,7 @@ export default function Home() {
                   <div>
                     <p className="text-slate-500">Effective Date</p>
                     <p className="font-medium text-slate-950">
-                      {transfer.effective_date || "Unknown"}
+                      {formatEffectiveDate(transfer.effective_date)}
                     </p>
                   </div>
                 </div>
